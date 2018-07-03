@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<report created="01/05/2018 22:55:12" provider="Active@ KillDisk" version="11.0.93">
+    <title>Disk Erase</title>
+    <!--Company (provider) Information-->
+    <company>
+        <name>Echo Environmental, LLC</name>
+        <licensed></licensed>
+        <location>2101 W Beltline Rd Carrollton TX 75006</location>
+        <phone>972-587-4040</phone>
+        <disclaimer>I hereby state that the data erasure has been carried out in accordance with the instructions given by software provider.</disclaimer>
+    </company>
+    <attributes>
+        <!--Erase attributes-->
+        <erase method="NIST 800-88 (One Pass Zeros)" passes="1" verification="10%"/>
+        <fingerprint write="No">Erased by Active@ KillDisk</fingerprint>
+        <diskinit initialize="No"/>
+        <diskeject eject="No"/>
+        <range first="0" total="488,397,168"/>
+        <!--Additional report attributes-->
+        <!--Error handling attributes and settings-->
+        <errors locksource="No" retries="3" errorLimit="10" terminate="ignore">
+            <ignore lock="Yes" read="Yes" write="Yes"/>
+        </errors>
+    </attributes>
+    <processed>
+        <disk>
+            <started>01/05/2018 18:08:03</started>
+            <device attributes="Disk; Populated; Ready; ">
+                <path>PhysicalDrive0</path>
+            </device>
+            <elapsed title="Elapsed" value="04:47:09"/>
+            <errors title="Errors" value="Detected 236 errors reading disk sectors"/>
+            <label title="Label" value="ATA     ST3250310CS, S/N: 6RYNNAHM [233 GB]"/>
+            <method title="Erase Method" value="NIST 800-88 (One Pass Zeros)"/>
+            <name title="Title" value="Erasing PhysicalDrive0"/>
+            <operator title="Operator" value="Technician"/>
+            <passes title="Erase Passes" value="1"/>
+            <started title="Started at" value="01/05/2018 18:08:03"/>
+            <status title="Status" value="Erased"/>
+            <verification title="Verification" value="Verification passed"/>
+        </disk>
+        <!--Erase passes log-->
+        <passes>
+            <pass title="Pass  1 (0x000000000000)" status="OK"/>
+            <pass title="Pass  1 (0x000000000000)" status="Detected 236 errors reading disk sectors"/>
+            <pass title="Verification" status="passed OK"/>
+        </passes>
+    </processed>
+    <result>
+        <conclusion>Disk Erase completed with errors</conclusion>
+    </result>
+</report>
