@@ -6,8 +6,8 @@ import java.util.Date;
 import java.text.SimpleDateFormat;
 
 import java.sql.*;
-import org.xml.sax.InputSource;
-import java.io.StringReader;
+//import org.xml.sax.InputSource;
+//import java.io.StringReader;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Document;
@@ -32,7 +32,7 @@ public class kd11parser {
         case 2:
           user = argv[0];
           pass = argv[1];
-          rptPath = "C:\\KDDATA\\KDParseFolder\\";
+          rptPath = "Z://";
           System.out.println("defaulting file path to :" + rptPath);
           server = "ELEREC-PC02\\SQLEXPRESSHDDDB";
           try{
@@ -57,6 +57,7 @@ public class kd11parser {
         default:
           System.out.println("Incomplete call.  Please restart the program with parameters as follows:");
           System.out.println("     java -jar kd11parser.java username password path_to_files");
+          rptPath = "Z://";
           break;
         }
         /*Microsoft authentication
@@ -69,7 +70,7 @@ public class kd11parser {
         //build loop to read first xml process then delete file repeat till done.
         //put in loop for each XML file
         try {
-            File fXmlFile = new File("C://Users/aross/Documents/NetBeansProjects/KD11Parser/src/kd11parser/Report-JP1572FL2E90ZK-Success-2018-05-01-08-53-53.xml");
+            File fXmlFile = new File(rptPath);//add file name
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
             Document doc = dBuilder.parse(fXmlFile);
@@ -85,8 +86,34 @@ public class kd11parser {
             String [] madSplit = madData.split(", |: | \\[|\\]");
             String serialNum = madSplit[2];
         
-            //remove partnumbers and WD- before upload
+            //remove partnumbers and WD- before upload and known part numbers
             serialNum = serialNum.replace("WD-","");
+            serialNum = serialNum.replace("JP1570","");
+            serialNum = serialNum.replace("JP1572","");
+            serialNum = serialNum.replace("JP1530","");
+            serialNum = serialNum.replace("JP1532","");
+            serialNum = serialNum.replace("JPB570","");
+            serialNum = serialNum.replace("JP1592","");
+            serialNum = serialNum.replace("VFC200","");
+            serialNum = serialNum.replace("VFA200","");
+            serialNum = serialNum.replace("VFG200","");
+            serialNum = serialNum.replace("VFJ200","");
+            serialNum = serialNum.replace("VFJ201","");
+            serialNum = serialNum.replace("SCA207","");
+            serialNum = serialNum.replace("SCK207","");
+            serialNum = serialNum.replace("SCA2N7","");
+            serialNum = serialNum.replace("GEM030","");
+            serialNum = serialNum.replace("GEM330","");
+            serialNum = serialNum.replace("GEK333","");
+            serialNum = serialNum.replace("GEK033","");
+            serialNum = serialNum.replace("GEK060","");
+            serialNum = serialNum.replace("GEM360","");
+            serialNum = serialNum.replace("GEK330","");
+            serialNum = serialNum.replace("GEK030","");
+            serialNum = serialNum.replace("GEK360","");
+            serialNum = serialNum.replace("GEL330","");
+            serialNum = serialNum.replace("GEL030","");
+            serialNum = serialNum.replace("GEM060","");
         
             //if found at front remove these part numbers
             String ModelNum = madSplit[0];
@@ -114,6 +141,7 @@ public class kd11parser {
             String eraseMethod;
             Timestamp WipeAndSessionEnd;
             String WipeStatus;
+            String Tech;
         
             nList = doc.getElementsByTagName("method");
             nNode = nList.item(0);
@@ -130,9 +158,9 @@ public class kd11parser {
             if (WipeStatus.equals("Disk Erase completed successfully")){
                 WipeStatus = "PASSED";
                 }
-            else if(WipeStatus.equals("Disk Erase completed")){
-                WipeStatus = "PASSED";
-                }
+            //else if(WipeStatus.equals("Disk Erase completed")){
+                //WipeStatus = "PASSED";
+                //}
             else if(WipeStatus.equals("Disk Erase completed with errors")){
                 WipeStatus = "FAILED";
                 }
@@ -168,7 +196,18 @@ public class kd11parser {
             date = cal.getTime();
             WipeAndSessionEnd = new Timestamp(date.getTime());
             System.out.println("The END: "+WipeAndSessionEnd);
-            String reportString = serialNum+","+startTime+","+ModelNum+","+hddsize+","+protocol+","+attachment+","+eraseMethod+","+startTime+","+WipeAndSessionEnd+","+startTime+","+WipeAndSessionEnd+","+WipeStatus;
+            
+            //pull the user name for this record
+            try{
+                nList = doc.getElementsByTagName("technician");
+                nNode = nList.item(0);
+                eElement = (Element) nNode;
+                Tech = eElement.getElementsByTagName("name").item(0).getTextContent();
+                System.out.println("Tech:  "+Tech);
+            }
+            catch (Exception e) {e.printStackTrace(); Tech = "UNK"; System.out.println("Tech:  "+Tech);}
+            
+            String reportString = serialNum+","+startTime+","+ModelNum+","+hddsize+","+protocol+","+attachment+","+eraseMethod+","+startTime+","+WipeAndSessionEnd+","+startTime+","+WipeAndSessionEnd+","+WipeStatus+","+Tech;
             System.out.println(reportString);
             
             //network upload and .err file if fail upload
@@ -177,10 +216,10 @@ public class kd11parser {
             e.printStackTrace();
         }
     }
-  private String workIt(String fileName){
+  private String workIt(String fileName, String reportPath){
       String reportString = fileName;
          try {
-            File fXmlFile = new File("C://Users/aross/Documents/NetBeansProjects/KD11Parser/src/kd11parser/Report-JP1572FL2E90ZK-Success-2018-05-01-08-53-53.xml");
+            File fXmlFile = new File(reportPath + fileName);
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
             Document doc = dBuilder.parse(fXmlFile);
