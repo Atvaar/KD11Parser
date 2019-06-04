@@ -4,6 +4,9 @@ import java.io.File;
 import java.util.Calendar;
 import java.util.Date;
 import java.text.SimpleDateFormat;
+import java.io.*; 
+import java.nio.file.Files; 
+import java.nio.file.*; 
 
 import java.sql.*;
 //import org.xml.sax.InputSource;
@@ -40,7 +43,7 @@ public class kd11parser {
               url = "jdbc:sqlserver://ELEREC-PC02\\SQLEXPRESSHDDDB;databaseName=HDD_Records";
               Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
               conn = DriverManager.getConnection(url, user, pass);
-            }  catch (Exception e) {e.printStackTrace();}
+            }  catch (Exception e) {e.printStackTrace(); System.out.println("##Failed Connection##");}
           break;
         case 3:
           user = argv[0];
@@ -52,7 +55,7 @@ public class kd11parser {
               url = "jdbc:sqlserver://MYPC\\SQLEXPRESS;databaseName=MYDB";
               Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
               conn = DriverManager.getConnection(url, user, pass);
-            }  catch (Exception e) {e.printStackTrace();}
+            }  catch (Exception e) {e.printStackTrace(); System.out.println("##Failed Connection##");}
           break;
         default:
           System.out.println("Incomplete call.  Please restart the program with parameters as follows:");
@@ -64,14 +67,26 @@ public class kd11parser {
         String url = "jdbc:sqlserver://MYPC\\SQLEXPRESS;databaseName=MYDB;integratedSecurity=true";
         Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
         Connection conn = DriverManager.getConnection(url);
+        
+        taike argv as directory to look at
+        build loop to read first xml process then delete file repeat till done.
+        put in loop for each XML file
         */
         
-        //taike argv as directory to look at
-        //build loop to read first xml process then delete file repeat till done.
-        //put in loop for each XML file
-        try {
-            File fXmlFile = new File(rptPath);//add file name
-            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+        //if directory has xml files do...
+        //read first file name
+        //decode first file
+        System.out.println("###-Function Output-###");
+        System.out.println(workIt("Report-6VV3TLC4-Success-2019-06-03-11-21-23.xml",rptPath));
+        //upload file to log and database
+        //move complete file to new folder      
+        
+    }
+  private static String workIt(String fileName, String reportPath){
+      String reportString = fileName;
+      String outPutString;
+         try {
+            File fXmlFile = new File(reportPath + fileName);DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
             Document doc = dBuilder.parse(fXmlFile);
             doc.getDocumentElement().normalize();
@@ -128,14 +143,15 @@ public class kd11parser {
                 protocol = "ATA";
                 ModelNum = ModelNum.replace("ATA     ", "");
             } else {protocol="UNK";}
+            
             String attachment = "SCSI Disk Device";
-            System.out.println("Serial Num:" + serialNum);
+            //System.out.println("Serial Num:" + serialNum);
             
             //remove part numbers for hitachi fujitsu, and WD-
-            System.out.println("Model Num:" + ModelNum);
-            System.out.println("HDD Size:"+hddsize);
-            System.out.println("Protocol:"+protocol);
-            System.out.println("Attachment:"+attachment);
+            //System.out.println("Model Num:" + ModelNum);
+            //System.out.println("HDD Size:"+hddsize);
+            //System.out.println("Protocol:"+protocol);
+            //System.out.println("Attachment:"+attachment);
         
             Timestamp startTime;
             String eraseMethod;
@@ -147,29 +163,25 @@ public class kd11parser {
             nNode = nList.item(0);
             eElement = (Element) nNode;
             eraseMethod = eElement.getAttribute("value");
-            System.out.println("Erase Method:"+eraseMethod);
+            //System.out.println("Erase Method:"+eraseMethod);
         
             nList = doc.getElementsByTagName("result");
             nNode = nList.item(0);
             eElement = (Element) nNode;
             WipeStatus = eElement.getElementsByTagName("conclusion").item(0).getTextContent();
-            System.out.println("Result:"+WipeStatus);
+            //System.out.println("Result:"+WipeStatus);
             
             if (WipeStatus.equals("Disk Erase completed successfully")){
                 WipeStatus = "PASSED";
-                }
-            //else if(WipeStatus.equals("Disk Erase completed")){
-                //WipeStatus = "PASSED";
-                //}
+            }
             else if(WipeStatus.equals("Disk Erase completed with errors")){
                 WipeStatus = "FAILED";
-                }
+            }
             else {
                 WipeStatus = "FAILED";
-                }
-            
+            }
             //if statement to convert to PASSED, FAILED, STOPPED
-            System.out.println("Wipe Status:"+WipeStatus);
+            //System.out.println("Wipe Status:"+WipeStatus);
             
             //get start time stamp & start session
             nList = doc.getElementsByTagName("disk");
@@ -179,7 +191,7 @@ public class kd11parser {
             SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
             Date date = dateFormat.parse(convertDT);
             startTime = new Timestamp(date.getTime());
-            System.out.println("Start Time: "+startTime);
+            //System.out.println("Start Time: "+startTime);
             
             //get end time //Will have to convert start time and Add elapsed time()()()()()()()()()
             nList = doc.getElementsByTagName("elapsed");
@@ -187,7 +199,7 @@ public class kd11parser {
             eElement = (Element) nNode;
             String elapsed =eElement.getAttribute("value");
             String elapsedTime[] = eElement.getAttribute("value").split(":");
-            System.out.println("Elapsed Time: "+elapsed);
+            //System.out.println("Elapsed Time: "+elapsed);
             Calendar cal = Calendar.getInstance();
             cal.setTime(date);
             cal.add(Calendar.HOUR_OF_DAY,Integer.parseInt(elapsedTime[0]));
@@ -195,7 +207,7 @@ public class kd11parser {
             cal.add(Calendar.SECOND,Integer.parseInt(elapsedTime[2]));
             date = cal.getTime();
             WipeAndSessionEnd = new Timestamp(date.getTime());
-            System.out.println("The END: "+WipeAndSessionEnd);
+            //System.out.println("The END: "+WipeAndSessionEnd);
             
             //pull the user name for this record
             try{
@@ -203,126 +215,22 @@ public class kd11parser {
                 nNode = nList.item(0);
                 eElement = (Element) nNode;
                 Tech = eElement.getElementsByTagName("name").item(0).getTextContent();
-                System.out.println("Tech:  "+Tech);
+                //System.out.println("Tech:  "+Tech);
             }
-            catch (Exception e) {e.printStackTrace(); Tech = "UNK"; System.out.println("Tech:  "+Tech);}
+            catch (Exception e) {
+                e.printStackTrace();
+                Tech = "UNK";
+                //System.out.println("Tech:  "+Tech);
+            }
             
-            String reportString = serialNum+","+startTime+","+ModelNum+","+hddsize+","+protocol+","+attachment+","+eraseMethod+","+startTime+","+WipeAndSessionEnd+","+startTime+","+WipeAndSessionEnd+","+WipeStatus+","+Tech;
-            System.out.println(reportString);
-            
-            //network upload and .err file if fail upload
-            //erase file when complete.
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-  private String workIt(String fileName, String reportPath){
-      String reportString = fileName;
-         try {
-            File fXmlFile = new File(reportPath + fileName);
-            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-            Document doc = dBuilder.parse(fXmlFile);
-            doc.getDocumentElement().normalize();
-        
-            //begin reading the data
-            NodeList nList = doc.getElementsByTagName("label");
-            Node nNode = nList.item(0);
-        
-            //get serial model and size data
-            Element eElement = (Element) nNode;
-            String madData = eElement.getAttribute("value");//this is all of the following few stats.
-            String [] madSplit = madData.split(", |: | \\[|\\]");
-            String serialNum = madSplit[2];
-        
-            //remove partnumbers and WD- before upload
-            serialNum = serialNum.replace("WD-","");
-        
-            //if found at front remove these part numbers
-            String ModelNum = madSplit[0];
-            String hddsize = madSplit[3];
-            String protocol;
-            
-            //seperating model number from device type because killdisk is inconsistant.
-            if (madSplit[0].endsWith(" ATA Device")){
-                protocol = "ATA";
-                ModelNum = ModelNum.replace(" ATA Device", "");
-            } else if (madSplit[0].contains("ATA     ")){
-                protocol = "ATA";
-                ModelNum = ModelNum.replace("ATA     ", "");
-            } else {protocol="UNK";}
-            String attachment = "SCSI Disk Device";
-            System.out.println("Serial Num:" + serialNum);
-            
-            //remove part numbers for hitachi fujitsu, and WD-
-            System.out.println("Model Num:" + ModelNum);
-            System.out.println("HDD Size:"+hddsize);
-            System.out.println("Protocol:"+protocol);
-            System.out.println("Attachment:"+attachment);
-        
-            Timestamp startTime;
-            String eraseMethod;
-            Timestamp WipeAndSessionEnd;
-            String WipeStatus;
-        
-            nList = doc.getElementsByTagName("method");
-            nNode = nList.item(0);
-            eElement = (Element) nNode;
-            eraseMethod = eElement.getAttribute("value");
-            System.out.println("Erase Method:"+eraseMethod);
-        
-            nList = doc.getElementsByTagName("result");
-            nNode = nList.item(0);
-            eElement = (Element) nNode;
-            WipeStatus = eElement.getElementsByTagName("conclusion").item(0).getTextContent();
-            System.out.println("Result:"+WipeStatus);
-            
-            if (WipeStatus.equals("Disk Erase completed successfully")){
-                WipeStatus = "PASSED";
-                }
-            else if(WipeStatus.equals("Disk Erase completed")){
-                WipeStatus = "PASSED";
-                }
-            else if(WipeStatus.equals("Disk Erase completed with errors")){
-                WipeStatus = "FAILED";
-                }
-            else {
-                WipeStatus = "FAILED";
-                }
-            
-            //if statement to convert to PASSED, FAILED, STOPPED
-            System.out.println("Wipe Status:"+WipeStatus);
-            
-            //get start time stamp & start session
-            nList = doc.getElementsByTagName("disk");
-            nNode = nList.item(0);
-            eElement = (Element) nNode;
-            String convertDT = eElement.getElementsByTagName("started").item(0).getTextContent();
-            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-            Date date = dateFormat.parse(convertDT);
-            startTime = new Timestamp(date.getTime());
-            System.out.println("Start Time: "+startTime);
-            
-            //get end time //Will have to convert start time and Add elapsed time()()()()()()()()()
-            nList = doc.getElementsByTagName("elapsed");
-            nNode = nList.item(0);
-            eElement = (Element) nNode;
-            String elapsed =eElement.getAttribute("value");
-            String elapsedTime[] = eElement.getAttribute("value").split(":");
-            System.out.println("Elapsed Time: "+elapsed);
-            Calendar cal = Calendar.getInstance();
-            cal.setTime(date);
-            cal.add(Calendar.HOUR_OF_DAY,Integer.parseInt(elapsedTime[0]));
-            cal.add(Calendar.MINUTE,Integer.parseInt(elapsedTime[1]));
-            cal.add(Calendar.SECOND,Integer.parseInt(elapsedTime[2]));
-            date = cal.getTime();
-            WipeAndSessionEnd = new Timestamp(date.getTime());
-            System.out.println("The END: "+WipeAndSessionEnd);
-            reportString = serialNum+","+startTime+","+ModelNum+","+hddsize+","+protocol+","+attachment+","+eraseMethod+","+startTime+","+WipeAndSessionEnd+","+startTime+","+WipeAndSessionEnd+","+WipeStatus;
-            System.out.println(reportString);
-            
-        } catch (Exception e) {e.printStackTrace();}
-      return reportString;
-    }
+            outPutString = serialNum+","+startTime+","+ModelNum+","+hddsize+","+protocol+","+attachment+","+eraseMethod+","+startTime+","+WipeAndSessionEnd+","+startTime+","+WipeAndSessionEnd+","+WipeStatus+","+Tech;
+            //System.out.println(outPutString);
+        } catch (Exception e) {e.printStackTrace(); return "FAILED";}
+      return outPutString;
+    }//end workIt
+  
+  private Boolean moveIt(Boolean gonogo, String fileToMove){
+      return true;
+    }//end moveIt
 
-}
+}//end class
