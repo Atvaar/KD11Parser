@@ -1,23 +1,23 @@
 package kd11parser;
 
 import java.io.File;
+import java.io.FilenameFilter;
+//import javax.swing.filechooser.FileNameExtensionFilter;
+//import java.io.*; 
+import java.nio.file.Files; 
+import java.nio.file.*; 
 import java.util.Calendar;
 import java.util.Date;
 import java.text.SimpleDateFormat;
-import java.io.*; 
-import java.nio.file.Files; 
-import java.nio.file.*; 
-
 import java.sql.*;
-//import org.xml.sax.InputSource;
-//import java.io.StringReader;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Node;
 import org.w3c.dom.Element;
-
+//import org.xml.sax.InputSource;
+//import java.io.StringReader;
 
 
 public class kd11parser {
@@ -26,7 +26,7 @@ public class kd11parser {
       String user;
       String pass;
       String rptPath;
-      String server;
+      String server = "ELEREC-PC02\\SQLEXPRESSHDDDB";
       String tableUsed = "MAIN$";
       Connection conn;
       String url;
@@ -37,7 +37,6 @@ public class kd11parser {
           pass = argv[1];
           rptPath = "Z://";
           System.out.println("defaulting file path to :" + rptPath);
-          server = "ELEREC-PC02\\SQLEXPRESSHDDDB";
           try{
               //SQL authentication
               url = "jdbc:sqlserver://ELEREC-PC02\\SQLEXPRESSHDDDB;databaseName=HDD_Records";
@@ -76,17 +75,23 @@ public class kd11parser {
         //if directory has xml files do...
         //read first file name
         //decode first file
-        System.out.println("###-Function Output-###");
-        System.out.println(workIt("Report-6VV3TLC4-Success-2019-06-03-11-21-23.xml",rptPath));
-        //upload file to log and database
-        //move complete file to new folder      
-        
+        File[] files = new File(rptPath).listFiles(new FilenameFilter() {public boolean accept(File dir, String name) {return name.toLowerCase().endsWith(".xml");}});
+        int myCount = files.length;
+        System.out.println(myCount);
+        //System.out.println("###-Function Output-###");
+        for (int i = 0; i < myCount; i++){
+            System.out.println("File " + (i + 1) + " of " + (myCount));
+            System.out.println(files[i].getName());
+            System.out.println(workIt(files[i].getName(),rptPath));
+            //upload file to log and database
+            //move complete file to new folder      
+        }
     }
   private static String workIt(String fileName, String reportPath){
-      String reportString = fileName;
+      String reportString = reportPath +fileName;
       String outPutString;
          try {
-            File fXmlFile = new File(reportPath + fileName);DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+            File fXmlFile = new File(reportString);DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
             Document doc = dBuilder.parse(fXmlFile);
             doc.getDocumentElement().normalize();
@@ -230,7 +235,23 @@ public class kd11parser {
     }//end workIt
   
   private Boolean moveIt(Boolean gonogo, String fileToMove){
-      return true;
+      //if gonogo = true set destination to Archive else if gonogo = false set destination to Error
+       try { 
+            Path temp = Files.move(Paths.get("C:\\Users\\Mayank\\Desktop\\44.txt"),Paths.get("C:\\Users\\Mayank\\Desktop\\dest\\445.txt")); 
+  
+            if(temp != null){ 
+                System.out.println("File renamed and moved successfully"); 
+            } else{ 
+                System.out.println("Failed to move the file");
+            }
+            return true;
+        } catch (Exception e){e.printStackTrace();return false;}
     }//end moveIt
+  
+  private static String findNextFile(File dir){
+      File[] files = dir.listFiles(new FilenameFilter() {public boolean accept(File dir, String name) {return name.toLowerCase().endsWith(".xml");}});
+      String nextFile = files[0].getName();
+      return nextFile;
+  }
 
 }//end class
