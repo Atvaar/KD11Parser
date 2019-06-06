@@ -2,8 +2,6 @@ package kd11parser;
 
 import java.io.File;
 import java.io.FilenameFilter;
-//import javax.swing.filechooser.FileNameExtensionFilter;
-//import java.io.*; 
 import java.nio.file.Files; 
 import java.nio.file.*; 
 import java.util.Calendar;
@@ -16,79 +14,91 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Node;
 import org.w3c.dom.Element;
-//import org.xml.sax.InputSource;
-//import java.io.StringReader;
 
 
 public class kd11parser {
-
+    private static Connection conn;
+    private static String server = "ELEREC-PC02\\SQLEXPRESSHDDDB";
+    private static String dbName = "HDD_Records";
+    private static String tableUsed = "MAIN$";
+    
   public static void main(String argv[]) {
-      String user;
-      String pass;
+      String user = "ESDTester";
+      String pass = "ESDTester";
       String rptPath;
-      String server = "ELEREC-PC02\\SQLEXPRESSHDDDB";
-      String tableUsed = "MAIN$";
-      Connection conn;
+      //Connection conn;
       String url;
       
       switch (argv.length){
         case 2:
           user = argv[0];
           pass = argv[1];
-          rptPath = "Z://";
+          rptPath = "\\\\Echo-App\\Killdisk\\";
           System.out.println("defaulting file path to :" + rptPath);
           try{
               //SQL authentication
-              url = "jdbc:sqlserver://ELEREC-PC02\\SQLEXPRESSHDDDB;databaseName=HDD_Records";
+              url = "jdbc:sqlserver://" + server + ";databaseName=" + dbName;
               Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
               conn = DriverManager.getConnection(url, user, pass);
-            }  catch (Exception e) {e.printStackTrace(); System.out.println("##Failed Connection##");}
+            }  catch (Exception e) {
+                e.printStackTrace();
+                System.out.println("##Failed Connection##");
+            }
           break;
         case 3:
           user = argv[0];
           pass = argv[1];
           rptPath = argv[2];
-          server = "ELEREC-PC02\\SQLEXPRESSHDDDB";
           try{
               //SQL authentication
-              url = "jdbc:sqlserver://MYPC\\SQLEXPRESS;databaseName=MYDB";
+              url = "jdbc:sqlserver://" + server + ";databaseName=" + dbName;
               Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
               conn = DriverManager.getConnection(url, user, pass);
-            }  catch (Exception e) {e.printStackTrace(); System.out.println("##Failed Connection##");}
+            }  catch (Exception e) {
+                e.printStackTrace();
+                System.out.println("##Failed Connection##");
+            }
           break;
         default:
           System.out.println("Incomplete call.  Please restart the program with parameters as follows:");
           System.out.println("     java -jar kd11parser.java username password path_to_files");
-          rptPath = "Z://";
+          rptPath = "\\\\Echo-App\\Killdisk\\";
+          try{
+              //SQL authentication
+              url = "jdbc:sqlserver:/" + server + ";databaseName=" + dbName;
+              Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+              conn = DriverManager.getConnection(url, user, pass);
+            }  catch (Exception e) {
+                e.printStackTrace();
+                System.out.println("##Failed Connection##");
+            }
           break;
         }
-        /*Microsoft authentication
-        String url = "jdbc:sqlserver://MYPC\\SQLEXPRESS;databaseName=MYDB;integratedSecurity=true";
-        Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-        Connection conn = DriverManager.getConnection(url);
-        
-        taike argv as directory to look at
-        build loop to read first xml process then delete file repeat till done.
-        put in loop for each XML file
-        */
-        
-        //if directory has xml files do...
-        //read first file name
-        //decode first file
         File[] files = new File(rptPath).listFiles(new FilenameFilter() {public boolean accept(File dir, String name) {return name.toLowerCase().endsWith(".xml");}});
         int myCount = files.length;
         System.out.println(myCount);
-        //System.out.println("###-Function Output-###");
+        
         for (int i = 0; i < myCount; i++){
             System.out.println("File " + (i + 1) + " of " + (myCount));
-            System.out.println(files[i].getName());
-            System.out.println(workIt(files[i].getName(),rptPath));
-            //upload file to log and database
-            //move complete file to new folder      
+            String checkIt = workIt(files[i].getName(),rptPath);
+            System.out.println(checkIt);
+            
+            if (checkIt.contentEquals("FAILED")){//if upload and read ok move to archive if fail move to Error
+                Boolean moveCheck = moveIt(false, files[i].getName(),rptPath);
+                if (moveCheck == false){
+                    System.exit(8);
+                }
+            } else {
+                Boolean moveCheck = moveIt(true, files[i].getName(),rptPath);
+                if (moveCheck == false){
+                    System.exit(9);
+                }
+            }//if for archive or error  
         }
     }
   private static String workIt(String fileName, String reportPath){
       String reportString = reportPath +fileName;
+      System.out.println(reportString);
       String outPutString;
          try {
             File fXmlFile = new File(reportString);DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
@@ -150,14 +160,6 @@ public class kd11parser {
             } else {protocol="UNK";}
             
             String attachment = "SCSI Disk Device";
-            //System.out.println("Serial Num:" + serialNum);
-            
-            //remove part numbers for hitachi fujitsu, and WD-
-            //System.out.println("Model Num:" + ModelNum);
-            //System.out.println("HDD Size:"+hddsize);
-            //System.out.println("Protocol:"+protocol);
-            //System.out.println("Attachment:"+attachment);
-        
             Timestamp startTime;
             String eraseMethod;
             Timestamp WipeAndSessionEnd;
@@ -185,7 +187,6 @@ public class kd11parser {
             else {
                 WipeStatus = "FAILED";
             }
-            //if statement to convert to PASSED, FAILED, STOPPED
             //System.out.println("Wipe Status:"+WipeStatus);
             
             //get start time stamp & start session
@@ -202,7 +203,6 @@ public class kd11parser {
             nList = doc.getElementsByTagName("elapsed");
             nNode = nList.item(0);
             eElement = (Element) nNode;
-            String elapsed =eElement.getAttribute("value");
             String elapsedTime[] = eElement.getAttribute("value").split(":");
             //System.out.println("Elapsed Time: "+elapsed);
             Calendar cal = Calendar.getInstance();
@@ -230,28 +230,52 @@ public class kd11parser {
             
             outPutString = serialNum+","+startTime+","+ModelNum+","+hddsize+","+protocol+","+attachment+","+eraseMethod+","+startTime+","+WipeAndSessionEnd+","+startTime+","+WipeAndSessionEnd+","+WipeStatus+","+Tech;
             //System.out.println(outPutString);
+            if (!uploadData(serialNum, startTime, ModelNum, hddsize, protocol, attachment, eraseMethod, WipeAndSessionEnd, WipeStatus, Tech)){
+                return "FAILED";
+            }
         } catch (Exception e) {e.printStackTrace(); return "FAILED";}
       return outPutString;
     }//end workIt
   
-  private Boolean moveIt(Boolean gonogo, String fileToMove){
+  private static Boolean moveIt(Boolean gonogo, String fileToMove, String Root){
       //if gonogo = true set destination to Archive else if gonogo = false set destination to Error
+      String folder;
+      String MoveMe;
+      if (gonogo){
+          folder = "Archive\\";
+      } else {
+          folder = "Error\\";
+      }
+      MoveMe = Root + folder + fileToMove;
        try { 
-            Path temp = Files.move(Paths.get("C:\\Users\\Mayank\\Desktop\\44.txt"),Paths.get("C:\\Users\\Mayank\\Desktop\\dest\\445.txt")); 
-  
+            Path temp = Files.move(Paths.get(Root + fileToMove),Paths.get(MoveMe));
             if(temp != null){ 
                 System.out.println("File renamed and moved successfully"); 
             } else{ 
                 System.out.println("Failed to move the file");
             }
             return true;
-        } catch (Exception e){e.printStackTrace();return false;}
+        } catch (Exception e){
+            e.printStackTrace();
+            return false;
+        }
     }//end moveIt
   
-  private static String findNextFile(File dir){
-      File[] files = dir.listFiles(new FilenameFilter() {public boolean accept(File dir, String name) {return name.toLowerCase().endsWith(".xml");}});
-      String nextFile = files[0].getName();
-      return nextFile;
-  }
-
+  private static Boolean uploadData(String serialNum,Date startTime,String ModelNum, String hddsize, String protocol, String attachment, String eraseMethod, Date WipeAndSessionEnd, String WipeStatus,String Tech){
+    //System.out.println("WTF Test");
+    try{
+        String SQL = "INSERT INTO [HDD_Records].[dbo].[" + tableUsed + "](HDSerial, WipeReport, HDModel, HDCapacity,HDProtocol,HDAttachment, EraseMethod, WipeStart, WipeFinished, SessionStart, SessionEnded, WipeStatus, TechName) VALUES('"+ serialNum
+            + "','" + startTime + "','" + ModelNum + "','" + hddsize + "','" + protocol + "','" + attachment + "','" + eraseMethod + "','" + startTime
+            + "','" + WipeAndSessionEnd + "','" + startTime + "','"
+            + WipeAndSessionEnd + "','" + WipeStatus + "','" + Tech + "')";
+        System.out.println("Inserting data with: " + SQL);
+        Statement stater =  conn.createStatement();
+        stater.executeUpdate(SQL);
+        return true;
+    }catch (Exception e) {
+        e.printStackTrace();
+        System.out.println("FAILED TO UPLOAD: " + serialNum);//if it fails display message
+        return false;
+    }
+  }//end uploadData
 }//end class
