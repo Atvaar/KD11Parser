@@ -7,7 +7,10 @@ import java.nio.file.*;
 import java.util.Calendar;
 import java.util.Date;
 import java.text.SimpleDateFormat;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
+import java.sql.Timestamp;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Document;
@@ -51,7 +54,8 @@ public class kd11parser {
           rptPath = argv[2];
           try{
               //SQL authentication
-              url = "jdbc:sqlserver://" + server + ";databaseName=" + dbName;
+              url = "jdbc:sqlserver://;servername=10.105.10.138\\SQLEXPRESSHDDDB;DatabaseName=HDD_Records;user=ESDTester;password=ESDTester";
+              //url = "jdbc:sqlserver://" + server + ";databaseName=" + dbName;
               Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
               conn = DriverManager.getConnection(url, user, pass);
             }  catch (Exception e) {
@@ -65,9 +69,11 @@ public class kd11parser {
           rptPath = "\\\\Echo-App\\Killdisk\\";
           try{
               //SQL authentication
-              url = "jdbc:sqlserver:/" + server + ";databaseName=" + dbName;
+              //url = "jdbc:sqlserver:/" + server + ";databaseName=" + dbName;
+              url = "jdbc:sqlserver://;servername=10.105.10.138\\SQLEXPRESSHDDDB;DatabaseName=HDD_Records;user=ESDTester;password=ESDTester";
               Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-              conn = DriverManager.getConnection(url, user, pass);
+              conn = DriverManager.getConnection(url);
+              //conn = DriverManager.getConnection(url, user, pass);
             }  catch (Exception e) {
                 e.printStackTrace();
                 System.out.println("##Failed Connection##");
@@ -86,12 +92,14 @@ public class kd11parser {
             if (checkIt.contentEquals("FAILED")){//if upload and read ok move to archive if fail move to Error
                 Boolean moveCheck = moveIt(false, files[i].getName(),rptPath);
                 if (moveCheck == false){
-                    System.exit(8);
+                    System.out.println("FAILED TO UPLOAD DATA");
+                    //System.exit(8);
                 }
             } else {
                 Boolean moveCheck = moveIt(true, files[i].getName(),rptPath);
                 if (moveCheck == false){
-                    System.exit(9);
+                    System.out.println("FAILED TO MOVE FILE");
+                    //System.exit(9);
                 }
             }//if for archive or error  
         }
