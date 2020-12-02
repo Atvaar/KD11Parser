@@ -54,7 +54,8 @@ public class kd11parser {
           rptPath = argv[2];
           try{
               //SQL authentication
-              url = "jdbc:sqlserver://;servername=10.105.10.138\\SQLEXPRESSHDDDB;DatabaseName=HDD_Records;user=ESDTester;password=ESDTester";
+              url = "jdbc:sqlserver://;servername=ELEREC-PC02\\SQLEXPRESSHDDDB;DatabaseName=HDD_Records;user=ESDTester;password=ESDTester";
+              //url = "jdbc:sqlserver://;servername=10.105.10.138\\SQLEXPRESSHDDDB;DatabaseName=HDD_Records;user=ESDTester;password=ESDTester";
               //url = "jdbc:sqlserver://" + server + ";databaseName=" + dbName;
               Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
               conn = DriverManager.getConnection(url, user, pass);
@@ -70,7 +71,8 @@ public class kd11parser {
           try{
               //SQL authentication
               //url = "jdbc:sqlserver:/" + server + ";databaseName=" + dbName;
-              url = "jdbc:sqlserver://;servername=10.105.10.138\\SQLEXPRESSHDDDB;DatabaseName=HDD_Records;user=ESDTester;password=ESDTester";
+              url = "jdbc:sqlserver://;servername=ELEREC-PC02\\SQLEXPRESSHDDDB;DatabaseName=HDD_Records;user=ESDTester;password=ESDTester";            
+              //url = "jdbc:sqlserver://;servername=10.105.10.138\\SQLEXPRESSHDDDB;DatabaseName=HDD_Records;user=ESDTester;password=ESDTester";
               Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
               conn = DriverManager.getConnection(url);
               //conn = DriverManager.getConnection(url, user, pass);
